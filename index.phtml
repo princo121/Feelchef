@@ -1,0 +1,273 @@
+<script type="text/javascript" src="/js/bootstrap-datepicker.js"></script>
+<?php if ($this->plugin('translate')->getTranslator()->getLocale() == 'en') { ?>
+<script type="text/javascript" src="/js/locales/bootstrap-datepicker.js" charset="UTF-8"></script>
+<?php } else {?>
+<script type="text/javascript" src="/js/locales/bootstrap-datepicker.<?php echo $this->plugin('translate')->getTranslator()->getLocale()?>.js" charset="UTF-8"></script>
+<?php } ?>
+<script
+	type="text/javascript" src="/js/bootstrap-timepicker.min.js"></script>
+<script type="text/javascript">
+var prezzo_min = "";
+var prezzo_max = "";
+var nowTemp = new Date();
+var now = new Date(nowTemp.getFullYear(), nowTemp.getMonth(), nowTemp.getDate(), 0, 0, 0, 0);
+
+var data1 = "";
+var ora1 = "";
+var tipologia = "";
+var servizio = "";
+var host = location.protocol + "//" + location.host + "/<?php echo $this->plugin('translate')->getTranslator()->getLocale() ?>/proposte";
+var vista = "";
+$(window).load(function(){
+
+	
+	$('#h-slider').slider({
+		range: true,
+		values: [<?php echo $this->escapeHtml((isset($filtri['prezzo_min'])) ? $filtri['prezzo_min'] : '0'); ?>, <?php echo $this->escapeHtml((isset($filtri['prezzo_max'])) ? $filtri['prezzo_max'] : '100'); ?>],
+		change: function(event, ui) {
+			if (ui.values[0] > 0)
+			{
+				prezzo_min = "&prezzo_min=" + ui.values[0];
+			}
+			else
+			{
+				prezzo_min = "";
+			}
+			if (ui.values[1] < 100)
+			{
+				prezzo_max = "&prezzo_max=" + ui.values[1];
+			}
+			else
+			{
+				prezzo_max = "";
+			}
+			Filtri();
+    }		
+	});
+
+	$('input[name=id_tipologia]').click(function() {
+		tipologia = "";
+		$('input[name=id_tipologia]').each(function () {			
+	    	if (this.checked) 
+			{ 
+	    		tipologia +=  "&tipologia[]=" +  this.value
+			};
+		});
+		Filtri();
+	});
+	$('input[name=id_servizio]').click(function() {
+		servizio = "";
+		$('input[name=id_servizio]').each(function () {
+	    	if (this.checked) 
+			{ 
+    			servizio +=  "&servizio[]=" +  this.value
+			};
+		});
+	
+	 Filtri();
+	});
+	$('input[name=id_tipologia]').each(function () {			
+    	if (this.checked) 
+		{ 
+    		tipologia +=  "&tipologia[]=" +  this.value
+		};
+	});	
+	$('input[name=id_servizio]').each(function () {			
+    	if (this.checked) 
+		{ 
+    		servizio +=  "&servizio[]=" +  this.value
+		};
+	});		
+	
+	prezzo = $('#h-slider').slider("values");
+	if (prezzo[0] > 0)
+	{
+		prezzo_min = "&prezzo_min=" + prezzo[0];
+	}
+	if (prezzo[1] < 100)
+	{
+		prezzo_max = "&prezzo_max=" + prezzo[1];
+	}
+
+   $('#data').datepicker({
+       weekStart: 1,
+       startDate: now,
+       language: "it",
+       autoclose: true
+       }); 
+	<?php
+			$datetime = new DateTime($filtri['data']);
+			$locales = array('en' => 'm/d/Y', 'it'=> 'd/m/Y');
+			$mysession = new \Zend\Session\Container('base');				
+			$date =  $datetime->format($locales[$mysession->language]);
+			?>	
+			     
+   data1 = "&data=" +  "<?php echo $this->escapeHtml((isset($date)) ? $date : ""); ?>";
+   ora1 = "&ora=" +  "<?php echo $this->escapeHtml((isset($filtri['ora'])) ? $filtri['ora'] : ""); ?>";
+   
+   $('#ora').timepicker({showMeridian :false,  showSeconds: false, defaultTime : false, disableFocus: true});
+
+   $(".alignment .btn").click(function() {
+	
+	    //$("#alignment").val($(this).text());
+	    vista = "&vista=" + $(this).val();
+	    Filtri();
+	}); 
+
+	vista = "&vista=" + "<?php echo $this->escapeHtml((isset($filtri['vista'])) ? $filtri['vista'] : ""); ?>";
+   
+});
+
+function Filtri(){
+	var url = host + "?" + servizio + tipologia + prezzo_min + prezzo_max + data1 + ora1 + vista;
+	 window.location.href = url;
+}
+</script>
+
+
+<?php
+$searchform = $this->searchform;
+$searchform->prepare();
+
+?>
+<!-- Inizio Row Ricerca -->
+<div id="main" class="container">
+
+<div class="row">
+	<div class="span12">
+		<div class="widget-box">
+			<div class="widget-content">
+
+		<div id="content-header">
+
+		<?php echo $this->form()->openTag($searchform);?>
+			<div class="control-group">
+				<div class="controls controls-row">
+				<?php
+					
+				//echo $this->formInput($searchform->get('citta'));
+				?>
+
+					<div class="input-append date" id="data" data-date="">
+						<?php
+						echo $this->formInput($searchform->get('data'));
+						?>
+						<span class="add-on"><i class="icon-calendar"></i> </span>
+					</div>
+					<div class="input-append bootstrap-timepicker">
+					<?php
+					echo $this->formInput($searchform->get('ora'));
+					?>
+						<span class="add-on"><i class="icon-time"></i> </span>
+					</div>
+					<?php
+					//echo $this->formSelect($searchform->get('tipologia'));
+					?>
+
+					<?php
+					echo $this->formSubmit($searchform->get('cerca'));
+					?>
+				</div>
+			</div>
+			<?php
+			echo $this->form()->closeTag($searchform);
+			?>
+			<div class="btn-group alignment" data-toggle="buttons-radio">				
+				<button type="button" class="btn tip-bottom <?php echo $this->escapeHtml(($filtri['vista'] == "2")) ? "active" : ""; ?>" title="<?php echo $this->translate('Lista') ?>" value="2"><i class="icon-th-list"></i></button>
+				<button type="button" class="btn tip-bottom <?php echo $this->escapeHtml((($filtri['vista'] == "1") or !isset($filtri['vista']))) ? "active" : "";?>" title="<?php echo $this->translate('Foto') ?>" value="1"><i class="icon-th-large"></i></button>				
+			</div>
+		</div>
+	</div>
+</div></div>
+</div>
+<!-- Fine Row Ricerca -->
+
+<div
+	class="row">
+	<!-- Inizio Filtri -->
+	<div class="span3">
+		<div class="widget-box">
+			<div class="widget-title">
+				<h5><?php echo $this->translate('Filtri') ?></h5>
+			</div>
+			<div class="widget-content">
+				<div class="row-fluid">
+
+					<h4><?php echo $this->translate('Prezzo') ?></h4>
+					<div id="h-slider"
+						class="ui-slider ui-slider-horizontal ui-widget ui-widget-content ui-corner-all">
+						<div class="ui-slider-range ui-widget-header"></div>
+						<a class="ui-slider-handle ui-state-default ui-corner-all"
+							href="#"></a> <a
+							class="ui-slider-handle ui-state-default ui-corner-all" href="#"></a>
+					</div>
+					<div class="span1 ">
+						<span class="badge badge-inverse" id="prezzo_min"><?php echo (isset($filtri['prezzo_min']) ? $this->escapeHtml($filtri['prezzo_min']) : '0'); ?>
+						</span>
+					</div>
+					<div class="span1 offset8">
+						<span class="badge badge-inverse" id="prezzo_max"><?php echo $this->escapeHtml((isset($filtri['prezzo_max'])) ? $filtri['prezzo_max'] : '100+'); ?>
+						</span>
+					</div>
+
+					<br> <br>
+					<h4><?php echo $this->translate('Tipo di cucina') ?></h4>
+					<div class="controls controls-row">
+						<div id="checkbox" class="span8">
+						<?php
+						foreach ($tipologia as $key => $value)
+						{
+							if (isset($filtri['tipologia']) && in_array($key, $filtri['tipologia']))
+							{
+								echo "<label class='checkbox'><input type='checkbox'  checked='checked' name='id_tipologia' value='$key'>" . $this->translate($value) ."</label>";
+							}
+							else
+							{
+								echo "<label class='checkbox'><input type='checkbox' name='id_tipologia' value='$key'>" . $this->translate($value) ."</label>";
+							}
+
+						}
+						?>
+						</div>
+					</div>
+					<br>
+					<h4><?php echo $this->translate('Servizi') ?></h4>
+					<div class="controls controls-row">
+						<div id="checkbox" class="span8">
+						<?php
+						foreach ($servizi as $key => $value)
+						{
+							if (isset($filtri['servizio']) && in_array($key, $filtri['servizio']))
+							{
+								echo "<label class='checkbox'><input type='checkbox'  checked='checked' name='id_servizio' value='$key'>" . $this->translate($value) ."</label>";
+							}
+							else
+							{
+								echo "<label class='checkbox'><input type='checkbox' name='id_servizio' value='$key'>" . $this->translate($value) ."</label>";
+							}
+
+						}
+						?>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Fine Filtri -->
+	<!-- Inizio Contenuto -->
+	<div class="span9">
+		<ul class="recent-posts" id="proposte">
+		<?php print_r($proposte);?>
+		</ul>
+		<?php if ($status <> 'ok') : ?>
+		<div class="alert alert-error">
+		<?php echo $this->escapeHtml($status)  ?>
+		</div>
+		<?php endif; ?>
+		<?php echo $this->paginationControl($paginator, 'Sliding',	array('partial/paginator.phtml', 'Proposte'),array('route' => 'proposte'));?>
+	</div>
+
+	<!-- Fine Contenuto -->
+</div>
+</div>
